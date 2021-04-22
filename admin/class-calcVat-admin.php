@@ -20,7 +20,8 @@
  * @subpackage calcVat/admin
  * @author     jozdowska.edyta@protonmail.com
  */
-class calcVat_Admin {
+class calcVat_Admin
+{
 
 	/**
 	 * The ID of this plugin.
@@ -40,6 +41,7 @@ class calcVat_Admin {
 	 */
 	private $version;
 
+	private $postType;
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -47,11 +49,12 @@ class calcVat_Admin {
 	 * @param      string    $calcVat       The name of this plugin.
 	 * @param      string    $version    The version of this plugin.
 	 */
-	public function __construct( $calcVat, $version ) {
+	public function __construct($calcVat, $version, $postType)
+	{
 
 		$this->calcVat = $calcVat;
 		$this->version = $version;
-
+		$this->postType = $postType;
 	}
 
 	/**
@@ -59,7 +62,8 @@ class calcVat_Admin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_styles() {
+	public function enqueue_styles()
+	{
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -73,8 +77,7 @@ class calcVat_Admin {
 		 * class.
 		 */
 
-		wp_enqueue_style( $this->calcVat, plugin_dir_url( __FILE__ ) . 'css/calcVat-admin.css', array(), $this->version, 'all' );
-
+		wp_enqueue_style($this->calcVat, plugin_dir_url(__FILE__) . 'css/calcVat-admin.css', array(), $this->version, 'all');
 	}
 
 	/**
@@ -82,7 +85,8 @@ class calcVat_Admin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_scripts() {
+	public function enqueue_scripts()
+	{
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -96,8 +100,26 @@ class calcVat_Admin {
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->calcVat, plugin_dir_url( __FILE__ ) . 'js/calcVat-admin.js', array( 'jquery' ), $this->version, false );
-
+		wp_enqueue_script($this->calcVat, plugin_dir_url(__FILE__) . 'js/calcVat-admin.js', array('jquery'), $this->version, false);
 	}
 
+	public function add_custom_columns($columns)
+	{
+		unset($columns['title']);
+		unset($columns['author']);
+
+		$columns['product_name']     = __('Product name', 'calcVat');
+		$columns['amount']     = __('Amount', 'calcVat');
+		$columns['currency']     = __('Currency', 'calcVat');
+		$columns['used_vat']     = __('Used vat', 'calcVat');
+		$columns['calc']     = __('Calculated', 'calcVat');
+		$columns['ip']     = __('IP', 'calcVat');
+
+		return $columns;
+	}
+
+	public function table_content($column_name, $post_id)
+	{
+	
+	}
 }

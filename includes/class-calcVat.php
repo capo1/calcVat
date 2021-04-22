@@ -27,7 +27,8 @@
  * @subpackage calcVat/includes
  * @author     Your Name <email@example.com>
  */
-class calcVat {
+class calcVat
+{
 
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power
@@ -58,6 +59,14 @@ class calcVat {
 	protected $version;
 
 	/**
+	 * postType.
+	 *
+	 * @since    1.0.0
+	 * @access   protected
+	 * @var      string    $version    The current version of the plugin.
+	 */
+	protected $postType = 'vat';
+	/**
 	 * Define the core functionality of the plugin.
 	 *
 	 * Set the plugin name and the plugin version that can be used throughout the plugin.
@@ -66,8 +75,9 @@ class calcVat {
 	 *
 	 * @since    1.0.0
 	 */
-	public function __construct() {
-		if ( defined( 'calcVat_VERSION' ) ) {
+	public function __construct()
+	{
+		if (defined('calcVat_VERSION')) {
 			$this->version = calcVat_VERSION;
 		} else {
 			$this->version = '1.0.0';
@@ -76,9 +86,9 @@ class calcVat {
 
 		$this->load_dependencies();
 		$this->set_locale();
+		$this->add_custom_post_type_calcVat();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
-
 	}
 
 	/**
@@ -97,33 +107,33 @@ class calcVat {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function load_dependencies() {
+	private function load_dependencies()
+	{
 
 		/**
 		 * The class responsible for orchestrating the actions and filters of the
 		 * core plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-calcVat-loader.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-calcVat-loader.php';
 
 		/**
 		 * The class responsible for defining internationalization functionality
 		 * of the plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-calcVat-i18n.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-calcVat-i18n.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-calcVat-admin.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-calcVat-admin.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-calcVat-public.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'public/class-calcVat-public.php';
 
 		$this->loader = new calcVat_Loader();
-
 	}
 
 	/**
@@ -135,12 +145,22 @@ class calcVat {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function set_locale() {
+	private function set_locale()
+	{
 
 		$plugin_i18n = new calcVat_i18n();
 
-		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
+		$this->loader->add_action('plugins_loaded', $plugin_i18n, 'load_plugin_textdomain');
+	}
+	/**
+	 * 
+	 * Register post_type
+	 */
 
+	function add_custom_post_type_calcVat()
+	{
+		require_once plugin_dir_path(__FILE__) . 'class-custom-post-type-calcVat.php';
+		new calcVat_Post_Type($this->postType);
 	}
 
 	/**
@@ -150,14 +170,21 @@ class calcVat {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function define_admin_hooks() {
+	private function define_admin_hooks()
+	{
 
-		$plugin_admin = new calcVat_Admin( $this->get_calcVat(), $this->get_version() );
+		$plugin_admin = new calcVat_Admin($this->get_calcVat(), $this->get_version(),$this->postType);
 
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
+		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
 
+		//add custom columns
+		$this->loader->add_action('manage_' . $this->postType . '_posts_columns', $plugin_admin, 'add_custom_columns',10,1);
+
+		$this->loader->add_action('manage_event_' . $this->postType . '_column', $plugin_admin,  'table_content', 10, 2);
 	}
+
+	
 
 	/**
 	 * Register all of the hooks related to the public-facing functionality
@@ -166,13 +193,13 @@ class calcVat {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function define_public_hooks() {
+	private function define_public_hooks()
+	{
 
-		$plugin_public = new calcVat_Public( $this->get_calcVat(), $this->get_version() );
+		$plugin_public = new calcVat_Public($this->get_calcVat(), $this->get_version());
 
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
-
+		$this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
+		$this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
 	}
 
 	/**
@@ -180,7 +207,8 @@ class calcVat {
 	 *
 	 * @since    1.0.0
 	 */
-	public function run() {
+	public function run()
+	{
 		$this->loader->run();
 	}
 
@@ -191,7 +219,8 @@ class calcVat {
 	 * @since     1.0.0
 	 * @return    string    The name of the plugin.
 	 */
-	public function get_calcVat() {
+	public function get_calcVat()
+	{
 		return $this->calcVat;
 	}
 
@@ -201,7 +230,8 @@ class calcVat {
 	 * @since     1.0.0
 	 * @return    calcVat_Loader    Orchestrates the hooks of the plugin.
 	 */
-	public function get_loader() {
+	public function get_loader()
+	{
 		return $this->loader;
 	}
 
@@ -211,8 +241,8 @@ class calcVat {
 	 * @since     1.0.0
 	 * @return    string    The version number of the plugin.
 	 */
-	public function get_version() {
+	public function get_version()
+	{
 		return $this->version;
 	}
-
 }

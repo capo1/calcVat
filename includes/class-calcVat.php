@@ -163,6 +163,7 @@ class calcVat
 		new calcVat_Post_Type($this->postType);
 	}
 
+
 	/**
 	 * Register all of the hooks related to the admin area functionality
 	 * of the plugin.
@@ -178,10 +179,7 @@ class calcVat
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
 
-		//add custom columns
-		$this->loader->add_action('manage_' . $this->postType . '_posts_columns', $plugin_admin, 'add_custom_columns',10,1);
-
-		$this->loader->add_action('manage_event_' . $this->postType . '_column', $plugin_admin,  'table_content', 10, 2);
+		$this->loader->add_action('wp', $plugin_admin, 'initial_custom_table',10, 1);
 	}
 
 	
@@ -196,10 +194,15 @@ class calcVat
 	private function define_public_hooks()
 	{
 
-		$plugin_public = new calcVat_Public($this->get_calcVat(), $this->get_version());
+		$plugin_public = new calcVat_Public($this->get_calcVat(), $this->get_version(), $this->postType);
+
 
 		$this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
 		$this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
+
+		$this->loader->add_action('init', $plugin_public, 'add_vat_form_shortcode');
+		$this->loader->add_action('init', $plugin_public, 'save_vat_posts');
+		
 	}
 
 	/**

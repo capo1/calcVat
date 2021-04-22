@@ -20,7 +20,8 @@
  * @subpackage calcVat/public
  * @author     Your Name <email@example.com>
  */
-class calcVat_Public {
+class calcVat_Public
+{
 
 	/**
 	 * The ID of this plugin.
@@ -40,6 +41,8 @@ class calcVat_Public {
 	 */
 	private $version;
 
+	private $postType;
+
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -47,11 +50,12 @@ class calcVat_Public {
 	 * @param      string    $calcVat       The name of the plugin.
 	 * @param      string    $version    The version of this plugin.
 	 */
-	public function __construct( $calcVat, $version ) {
+	public function __construct($calcVat, $version, $postType)
+	{
 
 		$this->calcVat = $calcVat;
 		$this->version = $version;
-
+		$this->postType = $postType;
 	}
 
 	/**
@@ -59,7 +63,8 @@ class calcVat_Public {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_styles() {
+	public function enqueue_styles()
+	{
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -73,8 +78,7 @@ class calcVat_Public {
 		 * class.
 		 */
 
-		wp_enqueue_style( $this->calcVat, plugin_dir_url( __FILE__ ) . 'css/calcVat-public.css', array(), $this->version, 'all' );
-
+		wp_enqueue_style($this->calcVat, plugin_dir_url(__FILE__) . 'css/calcVat-public.css', array(), $this->version, 'all');
 	}
 
 	/**
@@ -82,7 +86,8 @@ class calcVat_Public {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_scripts() {
+	public function enqueue_scripts()
+	{
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -96,8 +101,100 @@ class calcVat_Public {
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->calcVat, plugin_dir_url( __FILE__ ) . 'js/calcVat-public.js', array( 'jquery' ), $this->version, false );
-
+		wp_enqueue_script($this->calcVat, plugin_dir_url(__FILE__) . 'js/calcVat-public.js', array('jquery'), $this->version, false);
 	}
 
+	/**
+	 * This function is responsible for validating the fields from form
+	 */
+	private function validateForm($v)
+	{
+
+		$errors = [];
+		foreach ($v as $key => $value) :
+			if (empty($value)) :
+				$errors[] = 'empty_' . $key;
+			endif;
+		endforeach;
+
+		return $errors;
+	}
+
+
+	/**
+	 * This function is responsible for prepare data to dave it to DB
+	 */
+	public function save_vat_posts()
+	{
+
+		if (!isset($_POST['cpt_vat_field']) || !wp_verify_nonce($_POST['cpt_vat_field'], 'cpt_vat_action'))
+			return;
+
+		$values = array(
+			'product_name'    => sanitize_text_field($_POST['product_name']),
+			'ammount_netto'  => (int)$_POST['ammount_netto'],
+			'currency'   => sanitize_text_field($_POST['currency']),
+			'used_vat'   => intval($_POST['used_vat'])
+		);
+
+		$url = wp_get_referer();
+
+		$errors = $this->validateForm($values);
+
+		if (!empty($errors)) {
+			$url = add_query_arg('error', implode(',', $errors), wp_get_referer());
+			wp_safe_redirect($url);
+			exit();
+		}
+
+		$calculate = 	$values['ammount_netto'] + ($values['ammount_netto'] * $values['used_vat'] / 100);
+
+		array_merge(
+			$values,
+			[
+				'calc' => $calculate,
+				'date' => current_time('mysql'),
+				'ip' => $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['REMOTE_ADDR']
+			]
+		);
+
+		$this->save_to_db($values);
+	}
+
+
+	/**
+	 * This function is responsible for save data to DB
+	 */
+	private function save_to_db($values)
+	{
+
+		$post = array(
+			'post_content'    => maybe_serialize($values),
+			'post_status'   => 'publish',
+			'post_type' => 'vat'
+		);
+
+		$new_post_id = wp_insert_post($post, 10, 1);
+
+		do_action('wp_insert_post', 'wp_insert_post', 10, 1);
+		update_post_meta($new_post_id, '', '');
+	}
+
+
+	/**
+	 * This function is responsible for add shortcode 
+	 */
+	public function add_vat_form_shortcode()
+	{
+		add_shortcode('vat_form', [$this, 'vat_form']);
+	}
+
+
+	/**
+	 * This function is responsible for process and display shortcode
+	 */
+	public function vat_form($atts)
+	{
+		require plugin_dir_path(__FILE__) . 'partials/plugin-calcVat-display.php';
+	}
 }

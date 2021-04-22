@@ -118,8 +118,32 @@ class calcVat_Admin
 		return $columns;
 	}
 
-	public function table_content($column_name, $post_id)
+	public function add_custom_columns_data($column, $post_id)
 	{
+		if ($column == 'product_name') {
+			$featured_product = get_post_meta($post_id, '_calcVat', true);
+			echo $featured_product;
+		}
+		return $column;
+	}
+
+	public function initial_custom_table()
+	{
+
+		add_filter( 'views_edit-'.$this->postType, [$this, "render_table"] );   
 	
+		//$list_table->display(); 
+
+	}
+
+	public function render_table()
+	{
+		require_once plugin_dir_path(__FILE__) . 'calcVat-admin-custom-table.php';
+		global $wp_list_table;
+		
+		$list_table = 	new Vat_List($this->postType);
+		add_action('current_screen', [	$list_table, 'remove_search_filter'], 11);
+		$list_table->prepare_items();
+		$wp_list_table = $list_table ; 
 	}
 }

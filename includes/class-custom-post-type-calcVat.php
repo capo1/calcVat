@@ -37,7 +37,8 @@ class calcVat_Post_Type
 		$args = array(
 			'capability_type' => 'post',
 			'capabilities' => [
-				'create_posts' => 'do_not_allow'
+				'create_posts' => false,
+				'delete_posts'         => true,
 			],
 			'map_meta_cap' => true,
 			'labels' => $labels,
@@ -47,7 +48,8 @@ class calcVat_Post_Type
 			'supports' => array('title', 'thumbnail'),
 			'has_archive' => false,
 			'show_in_nav_menus' => false,
-			'with_front' => false
+			'with_front' => false,
+			'rewrite' => array('slug' => 'vat'),
 		);
 
 		register_post_type($this->post_type, $args);

@@ -149,7 +149,7 @@ class calcVat_Public
 
 		$calculate = 	$values['ammount_netto'] + ($values['ammount_netto'] * $values['used_vat'] / 100);
 
-		array_merge(
+		$values =	array_merge(
 			$values,
 			[
 				'calc' => $calculate,

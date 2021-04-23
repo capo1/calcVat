@@ -140,10 +140,22 @@ class calcVat_Admin
 	{
 		require_once plugin_dir_path(__FILE__) . 'calcVat-admin-custom-table.php';
 		global $wp_list_table;
-		
+		echo '<div class="updated custom-notice">'.__('Add this shortcode to page').'<p>[vat_form currency="PLN" vat_options="23=%&22=%&8=%&7=%&5=%&3=%&0=%&o.o&zw]</p></div>';
 		$list_table = 	new Vat_List($this->postType);
 		add_action('current_screen', [	$list_table, 'remove_search_filter'], 11);
 		$list_table->prepare_items();
 		$wp_list_table = $list_table ; 
+		add_action('admin_notices', [$this, 'my_admin_notice']);
 	}
+
+
+	function admin_notice() {
+
+    global $pagenow;
+
+    if (( $pagenow == 'edit.php' ) && ($_GET['post_type'] == $this->postType)) {
+        echo '<div class="updated custom-notice"><p>[vat_form currency="PLN" vat_options="23=%&22=%&8=%&7=%&5=%&3=%&0=%&o.o&zw]</p></div>';
+    }
+}
+
 }

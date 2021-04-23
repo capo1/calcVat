@@ -39,7 +39,7 @@ endif;
     <form id="vat-form" method="post">
       <p class="col-xs-12">
         <label for="product_name"><?= __('Product name', 'calcVat'); ?></label><br />
-        <input  type="text" id="product_name" name="product_name" />
+        <input required type="text" id="product_name" name="product_name" />
         <?php
           if(isset($errors) && in_array('product_name', $errors)):
               __('empty_product_name', 'calcVal');
@@ -51,7 +51,7 @@ endif;
         <p class="col-xs-12 col-md-9">
           <label for="ammount_netto"><?= __('Amount', 'calcVat'); ?></label>
           <br />
-          <input  type="number" step="0.01" id="ammount_netto" name="ammount_netto" />
+          <input min="0" required type="number" step="0.01" id="ammount_netto" name="ammount_netto" />
 
           <?php
 
@@ -71,7 +71,7 @@ endif;
       <p class="col-xs-12">
         <label for="used_vat"><?= __('Vat', 'calcVat'); ?></label>
 
-        <select  id="used_vat" name="used_vat">
+        <select required id="used_vat" name="used_vat">
           <option value=""><?= __("Select vat", 'calcVat'); ?></option>
           <?php echo join('', $vat_options); ?>
         </select>

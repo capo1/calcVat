@@ -142,8 +142,7 @@ class calcVat_Public
 		$errors = $this->validateForm($values);
 
 		if (!empty($errors)) {
-			$url = add_query_arg('error', implode(',', $errors), wp_get_referer());
-			wp_safe_redirect($url);
+			wp_redirect($url.'?error='.implode(',', $errors));
 			exit();
 		}
 

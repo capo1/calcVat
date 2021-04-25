@@ -55,8 +55,21 @@ class calcVat_Admin
 		$this->calcVat = $calcVat;
 		$this->version = $version;
 		$this->postType = $postType;
+	
+		$this->add_settings_page();
+	
 	}
+		/**
+	 * Add settings page
+	 *
+	 * @since    1.0.0
+	 */
+	private function add_settings_page(){
 
+		require plugin_dir_path(__FILE__) . 'partials/calcVat-admin-display.php';
+		add_action( 'admin_init',  'cvregister_settings' );
+		add_action( 'admin_menu', [$this, 'cvadd_settings_page'] );
+	}
 	/**
 	 * Register the stylesheets for the admin area.
 	 *
@@ -103,35 +116,11 @@ class calcVat_Admin
 		wp_enqueue_script($this->calcVat, plugin_dir_url(__FILE__) . 'js/calcVat-admin.js', array('jquery'), $this->version, false);
 	}
 
-	public function add_custom_columns($columns)
-	{
-		unset($columns['title']);
-		unset($columns['author']);
-
-		$columns['product_name']     = __('Product name', 'calcVat');
-		$columns['amount']     = __('Amount', 'calcVat');
-		$columns['currency']     = __('Currency', 'calcVat');
-		$columns['used_vat']     = __('Used vat', 'calcVat');
-		$columns['calc']     = __('Calculated', 'calcVat');
-		$columns['ip']     = __('IP', 'calcVat');
-
-		return $columns;
-	}
-
-	public function add_custom_columns_data($column, $post_id)
-	{
-		if ($column == 'product_name') {
-			$featured_product = get_post_meta($post_id, '_calcVat', true);
-			echo $featured_product;
-		}
-		return $column;
-	}
-
 	public function initial_custom_table()
 	{
 
-		add_filter( 'views_edit-'.$this->postType, [$this, "render_table"] );   
-	
+		add_filter('views_edit-' . $this->postType, [$this, "render_table"]);
+
 		//$list_table->display(); 
 
 	}
@@ -140,22 +129,31 @@ class calcVat_Admin
 	{
 		require_once plugin_dir_path(__FILE__) . 'calcVat-admin-custom-table.php';
 		global $wp_list_table;
-		echo '<div class="updated custom-notice">'.__('Add this shortcode to page').'<p>[vat_form currency="PLN" vat_options="23=%&22=%&8=%&7=%&5=%&3=%&0=%&o.o&zw]</p></div>';
-		$list_table = 	new Vat_List($this->postType);
-		add_action('current_screen', [	$list_table, 'remove_search_filter'], 11);
+		echo '<div class="updated custom-notice">' . __('Add this shortcode to page') . '<p>[vat_form currency="PLN" vat_options="23=%&22=%&8=%&7=%&5=%&3=%&0=%&o.o&zw"]</p></div>';
+
+		$list_table = 	new Vat_List($this->postType);	
+
 		$list_table->prepare_items();
-		$wp_list_table = $list_table ; 
+
+		$wp_list_table = $list_table;
+
+		add_action('current_screen', [$list_table, 'remove_search_filter'], 11);
 		add_action('admin_notices', [$this, 'my_admin_notice']);
 	}
 
 
-	function admin_notice() {
+	function admin_notice()
+	{
 
-    global $pagenow;
+		global $pagenow;
 
-    if (( $pagenow == 'edit.php' ) && ($_GET['post_type'] == $this->postType)) {
-        echo '<div class="updated custom-notice"><p>[vat_form currency="PLN" vat_options="23=%&22=%&8=%&7=%&5=%&3=%&0=%&o.o&zw]</p></div>';
-    }
+		if (($pagenow == 'edit.php') && ($_GET['post_type'] == $this->postType)) {
+			echo '<div class="updated custom-notice"><p>[vat_form currency="PLN" vat_options="23=%&22=%&8=%&7=%&5=%&3=%&0=%&o.o&zw"]</p></div>';
+		}
+	}
+
+	function cvadd_settings_page() {
+    add_options_page( 'CalcVat Options', 'CalcVat', 'manage_options', 'dbi-example-plugin', 'cvrender_plugin_settings_page' );
 }
 
 }

@@ -1,0 +1,314 @@
+
+=grid-col-with($key, $grid)
+  flex-basis: percentage($key/$grid)
+  max-width: percentage($key/$grid)
+
+=grid-breakpoint($point, $breakpoints)
+  @each $key, $value in $breakpoints
+    @if $point == $key
+      @media only screen and (min-width: #{$value})
+        @content
+
+// stylelint-disable declaration-no-important
+
+=breakpoint__xs
+  @media (min-width: $col-xs)
+    @content
+
+=breakpoint__sm
+  @media (min-width: $col-sm)
+    @content
+
+=breakpoint__md
+  @media (min-width: $col-md)
+    @content
+
+=breakpoint__lg
+  @media (min-width: $col-lg)
+    @content
+
+=breakpoint__xl
+  @media (min-width: $col-xl)
+    @content
+
+=breakpoint__xxl
+  @media (min-width: $col-xxl)
+    @content
+
+=breakpoint__xs--max
+  @media (max-width: $col-sm - 1px)
+    @content
+
+=breakpoint__sm--max
+  @media (max-width: $col-md - 1px)
+    @content
+
+=breakpoint__md--max
+  @media (max-width: $col-lg - 1px)
+    @content
+
+=breakpoint__lg--max
+  @media (max-width: $col-xl - 1px)
+    @content
+
+// Margin and Padding
+$spacer: 2rem !default
+$spacers: () !default
+$sp: (0: 0,1: ($spacer * .25),2: ($spacer * .5), 3: $spacer, 4: ($spacer * 1.5),5: ($spacer * 3),6: ($spacer * 3.5),7: ($spacer * 4), 8: ($spacer * 4.5))
+
+$spacers: map-merge($sp, $spacers)
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    @for $i from 1 through $grid-columns
+
+      @each $prop, $abbrev in (margin: m, padding: p)
+        @each $size, $length in $spacers
+          .#{$abbrev}-#{$key}-#{$size}
+            #{$prop}: $length !important
+          .#{$abbrev}t-#{$key}-#{$size}
+            #{$prop}-top: $length !important
+
+          .#{$abbrev}r-#{$key}-#{$size}
+            #{$prop}-right: $length !important
+
+          .#{$abbrev}b-#{$key}-#{$size}
+            #{$prop}-bottom: $length !important
+
+          .#{$abbrev}l-#{$key}-#{$size}
+            #{$prop}-left: $length !important
+
+      // Negative margins (e.g., where `.mb-n1` is negative version of `.mb-1`)
+      @each $size, $length in $spacers
+        @if $size != 0
+          .m-#{$key}-n#{$size}
+            margin: -$length !important
+
+          .mt-#{$key}-n#{$size}
+            margin-top: -$length !important
+
+          .mr-#{$key}-n#{$size}
+            margin-right: -$length !important
+
+          .mb-#{$key}-n#{$size}
+            margin-bottom: -$length !important
+
+          .ml-#{$key}-n#{$size}
+            margin-left: -$length !important         
+
+          // Some special margin utils
+          .m-#{$key}-auto
+            margin: auto !important
+          .mt-#{$key}-auto
+            margin-top: auto !important
+
+          .mr-#{$key}-auto
+            margin-right: auto !important
+
+          .mb-#{$key}-auto
+            margin-bottom: auto !important
+
+          .ml-#{$key}-auto
+            margin-left: auto !important
+
+// col
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    @for $i from 1 through $grid-columns
+      .col-#{$key}-#{$i}        
+        @include grid-col-with($i, $grid-columns)
+      .order-#{$key}-#{$i}
+        order: $i
+
+//container
+@each $key, $value in $container
+  @include grid-breakpoint($key, $breakpoints)
+    .container
+      width: $value
+      max-width: 100%
+
+@function columnPadding($from: 1, $to: $grid-columns)
+  @if $from == $to
+    @return ',.col-xs-#{$from}, .col-sm-#{$from}, .col-md-#{$from}, .col-lg-#{$from}, .col-xl-#{$from}, .col-xxl-#{$from}'
+  @else
+    @return '.col-xs-#{$from}, .col-sm-#{$from}, .col-md-#{$from}, .col-lg-#{$from}, .col-xl-#{$from}, .col-xxl-#{$from}, ' + columnPadding($from+1, $to)
+
+#{columnPadding()}
+  padding: $grid-gutter/4
+  @include breakpoint__sm
+          padding: $grid-gutter/2
+  @include breakpoint__md
+          padding: $grid-gutter
+  
+  
+
+=breakpoint__header--desktop
+  @media (min-width: $header-mobile)
+    @content
+
+=breakpoint__header--mobile
+  @media (max-width: $header-mobile)
+    @content
+
+=style($style, $xs: null, $sm: null, $lg: null , $xl: null)
+  @if $xs == null
+    $xs: unset
+    $sm: unset
+    $lg: unset
+    $xl: unset
+  @else if $sm == null
+    $sm: $xs
+    $lg: $xs
+    $xl: $xs
+  @else if $lg == null
+    $lg: $sm
+    $xl: $sm
+
+  @include breakpoint__xs()
+    #{$style}: $xs
+  @include breakpoint__sm()
+    #{$style}: $sm
+  @include breakpoint__lg()
+    #{$style}: $lg
+  @include breakpoint__xl()
+    #{$style}: $xl
+
+=col-with($width)
+  flex-basis: $width
+  max-width: $width
+
+.container, .container-fluid
+  margin-left: auto
+  margin-right: auto
+  padding-left: $grid-gutter
+  padding-right: $grid-gutter
+
+  @include breakpoint__xxl
+    padding-left: $grid-gutter
+    padding-right: $grid-gutter
+
+.row
+  display: flex
+  flex-wrap: wrap
+  margin-left: - $grid-gutter
+  margin-right: - $grid-gutter
+
+  &--center
+    justify-content: center
+
+  &.no-gutters
+    margin-left: 0
+    margin-right: 0
+
+  &.align-item-center, .align-item-center
+    align-items: center
+
+  &.space-between
+    justify-content: space-between
+
+.col
+  padding-left: $grid-gutter/2
+  padding-right: $grid-gutter/2
+  @include breakpoint__md
+    padding-left: $grid-gutter
+    padding-right: $grid-gutter
+
+.no-gutters
+  padding: 0
+
+=breakpoint_dpi
+  @media (min-resolution: 120dpi)
+    @content
+=breakpoint__min($px)
+  @media (min-width: $px)
+    @content
+
+=breakpoint__max($px)
+  @media (max-width: $px)
+    @content
+
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .no-gutters-#{$key}
+      padding-left: 0
+      padding-right: 0
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .justify-center-#{$key}
+      justify-content: center
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .justify-end-#{$key}
+      justify-content: flex-end
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .align-end-#{$key}
+      align-content: flex-end
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .align-items-end-#{$key}
+      align-items: flex-end
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .text-right-#{$key}
+      text-align: right
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .text-center-#{$key}
+      text-align: center
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .text-left-#{$key}
+      text-align: left
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .flex-wrap-#{$key}
+      flex-wrap: wrap
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .has-margin-#{$key}
+      margin-left: -$grid-gutter
+      margin-right: -$grid-gutter
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .d-flex-#{$key}
+      display: flex
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .hide-#{$key}
+      display: none!important
+
+@each $key, $value in $breakpoints
+  @include grid-breakpoint($key, $breakpoints)
+    .show-#{$key}
+      display: block!important
+
+.row-reverse
+  flex-direction: row-reverse
+  
+.column-reverse
+  flex-direction: column-reverse
+
+.direction-column
+  flex-direction: column
+
+.direction-row
+  flex-direction: row
+
+.mt-auto
+  margin-top: auto
+
+.no-margins
+  margin: 0!important

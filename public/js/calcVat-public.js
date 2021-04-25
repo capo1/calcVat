@@ -1,32 +1,47 @@
-(function( $ ) {
+(function ($) {
 	'use strict';
+	function removeEmpty(obj) {
+		return Object.entries(obj)
+			.filter(([_, v]) => v != null)
+			.reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {});
+	}
 
-	/**
-	 * All of the code for your public-facing JavaScript source
-	 * should reside in this file.
-	 *
-	 * Note: It has been assumed you will write jQuery code here, so the
-	 * $ function reference has been prepared for usage within the scope
-	 * of this function.
-	 *
-	 * This enables you to define handlers, for when the DOM is ready:
-	 *
-	 * $(function() {
-	 *
-	 * });
-	 *
-	 * When the window is loaded:
-	 *
-	 * $( window ).load(function() {
-	 *
-	 * });
-	 *
-	 * ...and/or other possibilities.
-	 *
-	 * Ideally, it is not considered best practise to attach more than a
-	 * single DOM-ready or window-load handler for a particular page.
-	 * Although scripts in the WordPress core, Plugins and Themes may be
-	 * practising this, we should strive to set a better example in our own work.
-	 */
+	$(document).ready(function () {
 
-})( jQuery );
+		const vat_form = $('#vat_form'),
+			result_div = vat_form.find('#vat_result');
+
+		if (result_div.length > 0) {
+
+			calcVat_settings.localStringCurrency.currency = cv_currency;
+
+			vat_form.on('submit', function (e) {
+				e.preventDefault();
+				result_div.addClass('active')
+				
+				let form = $(this)[0],
+						acc = removeEmpty(Object.values(form).reduce((obj, field) => { obj[field.name] = field.value; return obj }, {}));
+				acc['action'] = calcVat_settings.action;
+
+				$.ajax({
+					url: calcVat_settings.ajaxurl,
+					method: "post",
+					data: acc,
+					dataType: "json",
+					success: function (response) {
+						if(response.success){
+							result_div.addClass('active').html(response.success)
+						}
+					},
+					error: function(){
+						alert(calcVat_settings.error)
+					}
+				});
+				return false;
+
+			});
+		}
+
+	});
+
+})(jQuery);

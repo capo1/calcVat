@@ -56,6 +56,9 @@ class calcVat_Public
 		$this->calcVat = $calcVat;
 		$this->version = $version;
 		$this->postType = $postType;
+
+		add_action('wp_ajax_nopriv_save_vat_posts', array($this, 'save_vat_posts'));
+		add_action('wp_ajax_save_vat_posts', array($this, 'save_vat_posts'));
 	}
 
 	/**
@@ -102,6 +105,20 @@ class calcVat_Public
 		 */
 
 		wp_enqueue_script($this->calcVat, plugin_dir_url(__FILE__) . 'js/calcVat-public.js', array('jquery'), $this->version, false);
+
+		$options = get_option( 'cv_plugin_options' );
+
+		wp_localize_script(
+			$this->calcVat,
+			'calcVat_settings',
+			array(
+				'error' => __('An unknown error has occurred', 'calcVat'),
+				'action' => 'save_vat_posts',
+				'ajaxurl'    => admin_url('admin-ajax.php'),
+				'lang_currency' => str_replace('_', '-', get_locale()),
+				'localStringCurrency' => ['style' => 'currency', 'currency' => '']
+			)
+		);
 	}
 
 	/**
@@ -112,7 +129,7 @@ class calcVat_Public
 
 		$errors = [];
 		foreach ($v as $key => $value) :
-			if (empty($value)) :
+			if (empty($value) || $value === '0') :
 				$errors[] = 'empty_' . $key;
 			endif;
 		endforeach;
@@ -126,15 +143,14 @@ class calcVat_Public
 	 */
 	public function save_vat_posts()
 	{
-
 		if (!isset($_POST['cpt_vat_field']) || !wp_verify_nonce($_POST['cpt_vat_field'], 'cpt_vat_action'))
 			return;
 
 		$values = array(
 			'product_name'    => sanitize_text_field($_POST['product_name']),
-			'ammount_netto'  => (int)$_POST['ammount_netto'],
+			'ammount_netto'  => floatval($_POST['ammount_netto']),
 			'currency'   => sanitize_text_field($_POST['currency']),
-			'used_vat'   => intval($_POST['used_vat'])
+			'used_vat'   => sanitize_text_field($_POST['used_vat'])
 		);
 
 		$url = wp_get_referer();
@@ -142,24 +158,32 @@ class calcVat_Public
 		$errors = $this->validateForm($values);
 
 		if (!empty($errors)) {
-			wp_redirect($url.'?error='.implode(',', $errors));
+			wp_redirect($url . '?error=' . implode(',', $errors));
 			exit();
 		}
 
-		$calculate = 	$values['ammount_netto'] + ($values['ammount_netto'] * $values['used_vat'] / 100);
+	  $result = __("The product price %s is: %0.2f PLN gross. The tax amount is:  %0.2f PLN.");
+		$vat = ($values['ammount_netto'] * intval($values['used_vat']) / 100);
+		$calculated = 	$values['ammount_netto'] + $vat;
 
 		$values =	array_merge(
 			$values,
 			[
-				'calc' => $calculate,
+				'calc' => $calculated,
 				'date' => current_time('mysql'),
 				'ip' => $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['REMOTE_ADDR']
 			]
 		);
 
 		$this->save_to_db($values);
-	}
 
+		if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+			$result = ['success' => sprintf($result, $values['product_name'], $calculated, $vat) ];
+			wp_send_json($result);
+		} else {
+			header("Location: " . $_SERVER["HTTP_REFERER"]);
+		}
+	}
 
 	/**
 	 * This function is responsible for save data to DB
@@ -176,7 +200,7 @@ class calcVat_Public
 		$new_post_id = wp_insert_post($post, 10, 1);
 
 		do_action('wp_insert_post', 'wp_insert_post', 10, 1);
-		update_post_meta($new_post_id, '', '');
+		return	update_post_meta($new_post_id, '', '');
 	}
 
 
@@ -185,15 +209,19 @@ class calcVat_Public
 	 */
 	public function add_vat_form_shortcode()
 	{
-		add_shortcode('vat_form', [$this, 'vat_form']);
+        if (!is_admin()) {
+            add_shortcode('vat_form', [$this, 'vat_form']);
+        }
 	}
 
 
 	/**
 	 * This function is responsible for process and display shortcode
 	 */
-	public function vat_form($atts)
-	{
-		require plugin_dir_path(__FILE__) . 'partials/plugin-calcVat-display.php';
+	public function vat_form($atts, $content = null, $tag)
+	{ 
+		if(is_single() || is_home() || is_singular())
+           require plugin_dir_path(__FILE__) . 'partials/plugin-calcVat-display.php';
+       
 	}
 }

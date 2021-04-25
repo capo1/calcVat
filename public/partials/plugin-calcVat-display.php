@@ -38,7 +38,7 @@ $errorContainer = "<div class='error'>%s</div>";
   </script>
   <div class="row">
     <div class="col-xs-12">
-      <h3><?= __('Count VAT', 'calcVat'); ?></h3>
+      <h3><?= __('Calculate VAT', 'calcVat'); ?></h3>
     </div>
 
     <form id="vat_form" method="post">
